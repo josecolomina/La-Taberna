@@ -1,0 +1,47 @@
+{
+  "puzzleId": "lethal_001",
+  "title": "The Classic Mage Burst",
+  "description": "Find lethal using your spells and spell damage minions.",
+  "playerState": {
+    "hp": 10,
+    "mana": { "current": 8, "max": 10 },
+    "hand": [
+      "CS2_029",
+      "CS2_029"
+    ],
+    "board": [
+      {
+        "id": "min_tal",
+        "cardRef": "EX1_012",
+        "name": "Bloodmage Thalnos",
+        "attack": 1,
+        "health": 1,
+        "spellDamage": 1,
+        "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/EX1_012.png",
+        "canAttack": true,
+        "type": "minion"
+      }
+    ]
+  },
+  "enemyState": {
+    "hp": 14,
+    "armor": 0,
+    "board": [
+      {
+        "id": "min_taunt",
+        "cardRef": "CS2_172",
+        "name": "Sen'jin Shieldmasta",
+        "attack": 3,
+        "health": 5,
+        "taunt": true,
+        "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_172.png",
+        "type": "minion"
+      }
+    ]
+  },
+  "solutionSequence": [
+    { "action": "play_spell", "cardId": "CS2_029", "targetId": "enemy_hero" },
+    { "action": "play_spell", "cardId": "CS2_029", "targetId": "enemy_hero" },
+    { "action": "attack",     "sourceId": "min_tal", "targetId": "enemy_hero" }
+  ]
+}
