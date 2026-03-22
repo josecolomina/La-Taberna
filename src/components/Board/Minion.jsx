@@ -6,9 +6,10 @@
 //   – Target-lock red glow via useInteraction
 //   – Impact shake + red flash animation
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useInteraction, INTERACTION_STATE } from '../../hooks/useInteraction';
+import Card from '../Card/Card';
 
 export default function Minion({ minion, owner, onLockTarget }) {
   const ref        = useRef(null);
@@ -20,8 +21,10 @@ export default function Minion({ minion, owner, onLockTarget }) {
     interaction.state === INTERACTION_STATE.TARGETING_SPELL ||
     interaction.state === INTERACTION_STATE.ATTACKING;
   const isValidTarget = arrowActive && isEnemy;
-  const isLocked      = interaction.lockedTarget?.id === minion.id;
   const canAttackNow  = isPlayer && minion.canAttack && interaction.state === INTERACTION_STATE.IDLE;
+
+  const [isHovered, setIsHovered] = useState(false);
+  const [isLeftHalf, setIsLeftHalf] = useState(true);
 
   // ── Event handlers ─────────────────────────────────────────────────────
   const handleMouseDown = (e) => {
@@ -33,14 +36,19 @@ export default function Minion({ minion, owner, onLockTarget }) {
     interaction.startAttacking(minion, pos);
   };
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (e) => {
+    setIsLeftHalf(e.clientX < window.innerWidth / 2);
+    setIsHovered(true);
     if (isValidTarget) {
       // Use taunt-aware locker if provided, else default
       if (onLockTarget) onLockTarget(minion.id, 'minion');
       else interaction.lockTarget(minion.id, 'minion');
     }
   };
-  const handleMouseLeave = () => { if (isValidTarget) interaction.clearTarget(); };
+  const handleMouseLeave = () => { 
+    setIsHovered(false);
+    if (isValidTarget) interaction.clearTarget(); 
+  };
 
   // Border color logic
   const borderColor = isLocked
@@ -102,7 +110,7 @@ export default function Minion({ minion, owner, onLockTarget }) {
         }}
       >
         <img
-          src={minion.image}
+          src={minion.tileImage || minion.image}
           alt={minion.name}
           className="w-full h-full object-cover scale-110"
         />
@@ -177,6 +185,22 @@ export default function Minion({ minion, owner, onLockTarget }) {
           ☠
         </div>
       )}
+      {/* ── CARD TOOLTIP (Full hover inspect) ────────────────────── */}
+      <AnimatePresence>
+        {isHovered && !arrowActive && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.15 }}
+            className={`absolute z-[100] top-1/2 -translate-y-1/2 pointer-events-none drop-shadow-2xl ${isLeftHalf ? 'left-[120%]' : 'right-[120%]'}`}
+          >
+            <div className={`w-[200px] ${isLeftHalf ? 'origin-left' : 'origin-right'} scale-125`}>
+              <Card data={minion} inHand={false} overrideScale={1} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

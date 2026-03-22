@@ -76,11 +76,11 @@ const initialState = {
   enemyState: {
     hp: 0, maxHealth: 30, armor: 0,
     board: [], weapon: null,
-    heroPower: null, heroPowerUsed: true,
     frozen: false,
   },
 
-  solutionSequence: [],
+  solutions: [],
+  completedSolution: null,
 
   // ── Event Engine ──────────────────────────────────────────────────────────
   actionQueue:          [],
@@ -96,8 +96,9 @@ const initialState = {
   // ── Discover ─────────────────────────────────────────────────────────────
   discoverOptions: null,    // null | Card[] (3 choices)
 
-  // ── Play history ─────────────────────────────────────────────────────────
+  // ── Play history & Undo ──────────────────────────────────────────────────
   playHistory: [],
+  pastStates: [],
 };
 
 // ── Store ─────────────────────────────────────────────────────────────────────
@@ -151,15 +152,58 @@ export const useGameStore = create((set, get) => ({
 
     set({
       ...data,
+      winConditionType:  data.winConditionType ?? 'LETHAL',
+      isBoardCleared:    false,
       actionQueue: [], isProcessing: false, targetingMode: null,
       currentSequenceIndex: 0, isWrongMove: false, isLethalFound: false,
       pendingBattlecry: null, discoverOptions: null, playHistory: [],
+      pastStates: [], completedSolution: null,
+      currentPuzzleData: puzzleData,   // store raw copy for reset
     });
   },
 
   resetPuzzle: () => {
-    const puzzleId = get().puzzleId;
-    if (!puzzleId || puzzleId === 'lethal_001') get().loadPuzzle(puzzle1);
+    const { currentPuzzleData } = get();
+    if (currentPuzzleData) get().loadPuzzle(currentPuzzleData);
+    else get().loadPuzzle(puzzle1);
+  },
+
+  saveSnapshot: () => {
+    set(state => {
+      try {
+        return {
+          pastStates: [...state.pastStates, {
+        playerState: structuredClone(state.playerState),
+        enemyState: structuredClone(state.enemyState),
+        playHistory: structuredClone(state.playHistory),
+        pendingBattlecry: structuredClone(state.pendingBattlecry),
+      }]
+          };
+      } catch (e) {
+        console.error("CLONE ERROR", e);
+        return {};
+      }
+    });
+  },
+
+  undoLastMove: () => {
+    set(state => {
+      if (state.pastStates.length === 0) return {};
+      const newPast = [...state.pastStates];
+      const snapshot = newPast.pop();
+      return {
+        playerState: snapshot.playerState,
+        enemyState: snapshot.enemyState,
+        playHistory: snapshot.playHistory,
+        pendingBattlecry: snapshot.pendingBattlecry,
+        pastStates: newPast,
+        // Resurrect valid visual state
+        isWrongMove: false,
+        isLethalFound: false,
+        isBoardCleared: false,
+      };
+    });
+    get().recalculateAuras();
   },
 
   setWrongMove: (val) => set({ isWrongMove: val }),
@@ -170,7 +214,7 @@ export const useGameStore = create((set, get) => ({
 
   performAction: (actionObj) => {
     const s = get();
-    if (s.isLethalFound || s.isWrongMove || s.isProcessing || s.targetingMode) return;
+    if (s.isLethalFound || s.isBoardCleared || s.isWrongMove || s.isProcessing || s.targetingMode) return;
     get().enqueueEvent(actionObj);
   },
 
@@ -184,18 +228,26 @@ export const useGameStore = create((set, get) => ({
     set({ isProcessing: true });
 
     while (get().actionQueue.length > 0) {
-      if (get().isWrongMove || get().isLethalFound) break;
+      if (get().isWrongMove || get().isLethalFound || get().isBoardCleared) break;
 
       const event = get().actionQueue[0];
+      const isBoardClear = get().winConditionType === 'BOARD_CLEAR';
 
-      if (event.action !== 'end_turn' && event.action !== 'hero_attack'
+      // Lethal: validate strict solution sequence. Board Clear: free-form, skip validation.
+      if (!isBoardClear
+          && event.action !== 'end_turn' && event.action !== 'hero_attack'
           && event.action !== 'use_hero_power' && event.action !== 'resolve_discover') {
         get().validateSolutionStep(event);
       }
 
       if (event.action === 'end_turn') {
-        set({ isWrongMove: true });
-        setTimeout(() => get().resetPuzzle(), 1500);
+        if (isBoardClear) {
+          // In Board Clear mode, end_turn = "Give up" — show fail screen
+          set({ isWrongMove: true });
+        } else {
+          set({ isWrongMove: true });
+          setTimeout(() => get().resetPuzzle(), 1500);
+        }
         break;
       }
 
@@ -207,33 +259,63 @@ export const useGameStore = create((set, get) => ({
       get().recalculateAuras();
       get().processDeaths();
 
+      // Check win condition after every action
+      get().checkWinCondition();
+
       await new Promise(r => setTimeout(r, 100));
     }
 
     set({ isProcessing: false });
 
+    // Final win check (covers last action)
+    get().checkWinCondition();
+  },
+
+  checkWinCondition: () => {
     const s = get();
-    if (s.currentSequenceIndex >= s.solutionSequence.length && s.enemyState.hp <= 0 && !s.isWrongMove) {
-      set({ isLethalFound: true });
+    if (s.isWrongMove || s.isLethalFound || s.isBoardCleared) return;
+
+    if (s.winConditionType === 'LETHAL') {
+      const hasSolutions = Array.isArray(s.solutions) && s.solutions.length > 0;
+      if (s.enemyState.hp <= 0) {
+        if (!hasSolutions || s.completedSolution) {
+          set({ isLethalFound: true });
+        }
+      }
+    } else if (s.winConditionType === 'BOARD_CLEAR') {
+      if (s.enemyState.board.length === 0) {
+        set({ isBoardCleared: true });
+      }
     }
   },
 
   validateSolutionStep: (event) => {
-    const state    = get();
-    const expected = state.solutionSequence[state.currentSequenceIndex];
-    if (!expected) return;
+    const state = get();
+    if (!state.solutions || state.solutions.length === 0) {
+      set({ currentSequenceIndex: state.currentSequenceIndex + 1 });
+      return;
+    }
 
-    let isMatch = true;
-    if (event.action   !== expected.action)                              isMatch = false;
-    else if (expected.cardId   && event.cardId   !== expected.cardId)   isMatch = false;
-    else if (expected.sourceId && event.sourceId !== expected.sourceId) isMatch = false;
-    else if (expected.targetId && event.targetId !== expected.targetId) isMatch = false;
+    const validPaths = state.solutions.filter(sol => {
+      if (state.currentSequenceIndex >= sol.sequence.length) return false;
+      const expected = sol.sequence[state.currentSequenceIndex];
+      let isMatch = true;
+      if (event.action !== expected.action) isMatch = false;
+      else if (expected.cardId && event.cardId !== expected.cardId) isMatch = false;
+      else if (expected.sourceId && event.sourceId !== expected.sourceId) isMatch = false;
+      else if (expected.targetId && event.targetId !== expected.targetId) isMatch = false;
+      return isMatch;
+    });
 
-    if (!isMatch) {
+    if (validPaths.length === 0) {
       set({ isWrongMove: true });
       setTimeout(() => get().resetPuzzle(), 1500);
     } else {
       set({ currentSequenceIndex: state.currentSequenceIndex + 1 });
+      const completed = validPaths.find(sol => sol.sequence.length === state.currentSequenceIndex + 1);
+      if (completed) {
+        set({ completedSolution: completed });
+      }
     }
   },
 
@@ -242,9 +324,11 @@ export const useGameStore = create((set, get) => ({
   // ─────────────────────────────────────────────────────────────────────────
 
   applyEvent: (event) => {
+    get().saveSnapshot();
+    
     set((state) => {
-      let player = JSON.parse(JSON.stringify(state.playerState));
-      let enemy  = JSON.parse(JSON.stringify(state.enemyState));
+      let player = structuredClone(state.playerState);
+      let enemy  = structuredClone(state.enemyState);
       const newHistory = [];
 
       const spellDamage = player.board.reduce((t, m) => t + (m.spellDamage || 0), 0);
@@ -305,6 +389,8 @@ export const useGameStore = create((set, get) => ({
 
       // ── play_minion ────────────────────────────────────────────────────
       else if (event.action === 'play_minion') {
+        if (player.board.length >= 7) return { isWrongMove: true };
+
         const cIdx = player.hand.findIndex(c => c.id === event.cardId);
         if (cIdx > -1) {
           const card = player.hand[cIdx];
@@ -486,8 +572,8 @@ export const useGameStore = create((set, get) => ({
 
     const { card, config } = pendingBattlecry;
     set(state => {
-      let player = JSON.parse(JSON.stringify(state.playerState));
-      let enemy  = JSON.parse(JSON.stringify(state.enemyState));
+      let player = structuredClone(state.playerState);
+      let enemy  = structuredClone(state.enemyState);
       const spellDamage = player.board.reduce((t, m) => t + (m.spellDamage || 0), 0);
 
       const findTarget = (id) => {
@@ -548,8 +634,8 @@ export const useGameStore = create((set, get) => ({
 
   recalculateAuras: () => {
     set(state => {
-      let p = JSON.parse(JSON.stringify(state.playerState));
-      let e = JSON.parse(JSON.stringify(state.enemyState));
+      let p = structuredClone(state.playerState);
+      let e = structuredClone(state.enemyState);
       applyAuras(p.board);
       applyAuras(e.board);
       return { playerState: p, enemyState: e };
@@ -558,8 +644,8 @@ export const useGameStore = create((set, get) => ({
 
   processDeaths: () => {
     set(state => {
-      let p = JSON.parse(JSON.stringify(state.playerState));
-      let e = JSON.parse(JSON.stringify(state.enemyState));
+      let p = structuredClone(state.playerState);
+      let e = structuredClone(state.enemyState);
 
       const pDead = p.board.filter(m => m.health <= 0);
       const eDead = e.board.filter(m => m.health <= 0);

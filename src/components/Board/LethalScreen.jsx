@@ -6,9 +6,12 @@
 //   3. "LETHAL FOUND" text bounces in from scale 0 with spring
 //   4. Particle-like gold "sparks" (CSS divs with random positions)
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGameStore } from '../../store/useGameStore';
+import { useGameStore }   from '../../store/useGameStore';
+import { useUserStore }   from '../../store/useUserStore';
+import { useSound }       from '../../hooks/useSound';
+import { buildPuzzleShareText, copyToClipboard } from '../../utils/shareState';
 
 // Generate random sparkle positions once
 const SPARKS = Array.from({ length: 20 }, (_, i) => ({
@@ -21,17 +24,40 @@ const SPARKS = Array.from({ length: 20 }, (_, i) => ({
 }));
 
 export default function LethalScreen({ isVisible }) {
-  const resetPuzzle = useGameStore(s => s.resetPuzzle);
+  const resetPuzzle  = useGameStore(s => s.resetPuzzle);
+  const { puzzleId, title, playerState, playHistory } = useGameStore(s => ({
+    title:       s.title,
+    playerState: s.playerState,
+    playHistory: s.playHistory,
+    completedSolution: s.completedSolution,
+  }));
+  const recordPuzzleSolved = useUserStore(s => s.recordPuzzleSolved);
+  const { play } = useSound();
   const [showReplay, setShowReplay] = useState(false);
+  const [copied, setCopied]         = useState(false);
+  const grantedRef                  = useRef(false);
 
   useEffect(() => {
     if (isVisible) {
+      // Play victory SFX + grant XP exactly once per lethal
+      if (!grantedRef.current) {
+        grantedRef.current = true;
+        play('victory');
+        recordPuzzleSolved(completedSolution?.rating || 'GOOD');
+      }
       const t = setTimeout(() => setShowReplay(true), 1800);
       return () => clearTimeout(t);
     } else {
       setShowReplay(false);
+      grantedRef.current = false;
     }
   }, [isVisible]);
+
+  const handleShare = async () => {
+    const text = buildPuzzleShareText(puzzleId, title, playerState?.heroClass, playHistory);
+    const ok   = await copyToClipboard(text);
+    if (ok) { setCopied(true); setTimeout(() => setCopied(false), 2000); }
+  };
 
   return (
     <AnimatePresence>
@@ -108,6 +134,30 @@ export default function LethalScreen({ isVisible }) {
               LETHAL FOUND
             </motion.h1>
 
+            {/* Rating & Feedback */}
+            {completedSolution && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1 }}
+                style={{
+                  color: completedSolution.rating === 'BEST' ? '#fbbf24' : completedSolution.rating === 'GOOD' ? '#e2e8f0' : '#b45309',
+                  textAlign: 'center',
+                  maxWidth: '400px',
+                  background: 'rgba(0,0,0,0.6)',
+                  padding: '12px 20px',
+                  borderRadius: '12px',
+                  border: `1px solid ${completedSolution.rating === 'BEST' ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.2)'}`,
+                  marginTop: '8px'
+                }}
+              >
+                <h2 style={{ fontSize: '1.4rem', marginBottom: '6px', fontFamily: 'var(--font-hs)', letterSpacing: '0.05em' }}>
+                  {completedSolution.rating === 'BEST' ? '🥇 BEST SOLUTION' : completedSolution.rating === 'GOOD' ? '🥈 GOOD SOLUTION' : '🥉 BAD SOLUTION'}
+                </h2>
+                <p style={{ fontSize: '0.95rem', color: '#cbd5e1', lineHeight: 1.4 }}>{completedSolution.feedback}</p>
+              </motion.div>
+            )}
+
             {/* Decorative line */}
             <motion.div
               initial={{ scaleX: 0 }}
@@ -122,33 +172,47 @@ export default function LethalScreen({ isVisible }) {
             />
           </motion.div>
 
-          {/* ── Replay button (appears after 1.8 s) ─────────────── */}
+          {/* ── Replay + Share buttons (appear after 1.8 s) ─────── */}
           <AnimatePresence>
             {showReplay && (
-              <motion.button
-                key="replay"
+              <motion.div
+                key="replay-row"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.07, boxShadow: '0 0 24px rgba(212,175,55,0.7)' }}
-                whileTap={{ scale: 0.94 }}
-                onClick={resetPuzzle}
-                style={{
-                  marginTop: 36,
-                  padding: '12px 36px',
-                  background: 'radial-gradient(ellipse at 50% 30%, #3a3528, #1e1c16)',
-                  border: '3px solid rgba(212,175,55,0.8)',
-                  borderRadius: 10,
-                  color: '#d4af37',
-                  fontSize: 14,
-                  fontFamily: 'var(--font-hs)',
-                  fontWeight: 700,
-                  letterSpacing: '0.12em',
-                  cursor: 'pointer',
-                  textShadow: '0 0 8px rgba(212,175,55,0.5)',
-                }}
+                className="flex gap-3 mt-9"
               >
-                ↺ PLAY AGAIN
-              </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.07, boxShadow: '0 0 24px rgba(212,175,55,0.7)' }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={resetPuzzle}
+                  style={{
+                    padding: '12px 36px',
+                    background: 'radial-gradient(ellipse at 50% 30%, #3a3528, #1e1c16)',
+                    border: '3px solid rgba(212,175,55,0.8)',
+                    borderRadius: 10, color: '#d4af37',
+                    fontSize: 14, fontFamily: 'var(--font-hs)',
+                    fontWeight: 700, letterSpacing: '0.12em',
+                    cursor: 'pointer', textShadow: '0 0 8px rgba(212,175,55,0.5)',
+                  }}
+                >
+                  ↺ PLAY AGAIN
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.94 }}
+                  onClick={handleShare}
+                  style={{
+                    padding: '12px 18px',
+                    background: 'rgba(20,14,6,0.8)',
+                    border: '2px solid rgba(100,80,40,0.5)',
+                    borderRadius: 10, color: copied ? '#4ade80' : '#94a3b8',
+                    fontSize: 12, fontFamily: 'var(--font-hs)',
+                    cursor: 'pointer', letterSpacing: '0.1em',
+                    transition: 'color 0.2s',
+                  }}
+                >
+                  {copied ? '✓ Copied!' : '📋 Share'}
+                </motion.button>
+              </motion.div>
             )}
           </AnimatePresence>
         </motion.div>

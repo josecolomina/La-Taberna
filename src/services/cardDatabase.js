@@ -130,8 +130,9 @@ export function normalizeCard(raw) {
     // ── Keywords (our engine format) ──────────────────────────
     ...keywords,
 
-    // ── Art URL ────────────────────────────────────────────────
+    // ── Art URLs ───────────────────────────────────────────────
     image: cardImageUrl(raw.id),
+    tileImage: `https://art.hearthstonejson.com/v1/tiles/${raw.id}.png`,
   };
 }
 

@@ -1,0 +1,89 @@
+[
+  {
+    "id": "mull_001",
+    "playerClass": "MAGE",
+    "opponentClass": "WARRIOR",
+    "hasCoin": false,
+    "description": "Aggro Warrior on the ladder — prioritize cheap removal and tempo.",
+    "initialHand": [
+      {
+        "cardId": "CS2_029",
+        "mulliganWinrate": 41.2,
+        "keepRate": 12.1,
+        "note": "Fireball (6 mana) is too slow vs Aggro. Almost always a mulligan."
+      },
+      {
+        "cardId": "EX1_012",
+        "mulliganWinrate": 53.1,
+        "keepRate": 55.2,
+        "note": "Bloodmage Thalnos: decent — gives Spell Damage and draws a card. Situational keep."
+      },
+      {
+        "cardId": "CS2_172",
+        "mulliganWinrate": 44.8,
+        "keepRate": 22,
+        "note": "Sen'jin (4 mana) is slightly slow; prefer cheaper taunts vs Warrior aggro."
+      }
+    ]
+  },
+  {
+    "id": "mull_002",
+    "playerClass": "PALADIN",
+    "opponentClass": "DRUID",
+    "hasCoin": true,
+    "description": "Midrange Druid — you have the Coin. Look for 3-drops and early board presence.",
+    "initialHand": [
+      {
+        "cardId": "CS2_172",
+        "mulliganWinrate": 58.7,
+        "keepRate": 63,
+        "note": "Sen'jin Shieldmasta slows their ramp and contests the board. Strong keep."
+      },
+      {
+        "cardId": "CS2_029",
+        "mulliganWinrate": 44.8,
+        "keepRate": 21.1,
+        "note": "6-mana spell is far too slow for this matchup — always discard."
+      },
+      {
+        "cardId": "EX1_012",
+        "mulliganWinrate": 61.4,
+        "keepRate": 72.3,
+        "note": "Thalnos + Coin gives you early Spell Damage value. Almost always keep."
+      },
+      {
+        "cardId": "CS2_172",
+        "mulliganWinrate": 49.2,
+        "keepRate": 31.8,
+        "note": "Second copy of a 4-drop is mediocre — mulligan one of the two Sen'jins."
+      }
+    ]
+  },
+  {
+    "id": "mull_003",
+    "playerClass": "WARRIOR",
+    "opponentClass": "MAGE",
+    "hasCoin": false,
+    "description": "Control Mage — look for weapons and early pressure before they stabilize.",
+    "initialHand": [
+      {
+        "cardId": "EX1_012",
+        "mulliganWinrate": 51.3,
+        "keepRate": 45,
+        "note": "Thalnos: decent draw and cycle — fine to keep if nothing better."
+      },
+      {
+        "cardId": "CS2_029",
+        "mulliganWinrate": 38.4,
+        "keepRate": 8.2,
+        "note": "Never keep Fireball vs Control Mage — they out-value you. Always mulligan."
+      },
+      {
+        "cardId": "CS2_172",
+        "mulliganWinrate": 57.5,
+        "keepRate": 61.3,
+        "note": "Sen'jin forces Mage to spend removal early — great tempo play. Keep."
+      }
+    ]
+  }
+]

@@ -1,0 +1,410 @@
+[
+  {
+    "puzzleId": "clear_001",
+    "title": "AoE Setup",
+    "description": "Use Spell Damage to power up an Arcane Explosion, then finish with a Fireball. Clear the board efficiently.",
+    "difficulty": "easy",
+    "winConditionType": "BOARD_CLEAR",
+    "playerState": {
+      "hp": 20,
+      "mana": {
+        "current": 8,
+        "max": 8
+      },
+      "heroClass": "MAGE",
+      "hand": [
+        "CS2_025",
+        "CS2_029"
+      ],
+      "board": [
+        {
+          "id": "min_thal_bc1",
+          "cardRef": "EX1_012",
+          "name": "Bloodmage Thalnos",
+          "attack": 1,
+          "health": 1,
+          "spellDamage": 1,
+          "canAttack": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/EX1_012.png"
+        }
+      ]
+    },
+    "enemyState": {
+      "hp": 30,
+      "armor": 0,
+      "board": [
+        {
+          "id": "min_e1",
+          "cardRef": "CS2_189",
+          "name": "Elven Archer",
+          "attack": 1,
+          "health": 1,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_189.png"
+        },
+        {
+          "id": "min_e2",
+          "cardRef": "CS2_189",
+          "name": "Elven Archer",
+          "attack": 1,
+          "health": 1,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_189.png"
+        },
+        {
+          "id": "min_e3",
+          "cardRef": "CS2_189",
+          "name": "Elven Archer",
+          "attack": 1,
+          "health": 1,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_189.png"
+        },
+        {
+          "id": "min_e4",
+          "cardRef": "CS2_172",
+          "name": "Sen'jin Shieldmasta",
+          "attack": 3,
+          "health": 4,
+          "taunt": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_172.png"
+        }
+      ]
+    }
+  },
+  {
+    "puzzleId": "clear_002",
+    "title": "Poison Fangs",
+    "description": "Send your Poisonous assassin into the big threat, then sweep the rest with Fan of Knives and Eviscerate.",
+    "difficulty": "normal",
+    "winConditionType": "BOARD_CLEAR",
+    "playerState": {
+      "hp": 25,
+      "mana": {
+        "current": 7,
+        "max": 7
+      },
+      "heroClass": "ROGUE",
+      "hand": [
+        "CS2_074",
+        "EX1_334"
+      ],
+      "board": [
+        {
+          "id": "min_assassin",
+          "cardRef": "EX1_083",
+          "name": "Patient Assassin",
+          "attack": 1,
+          "health": 1,
+          "poisonous": true,
+          "stealth": true,
+          "canAttack": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/EX1_083.png"
+        }
+      ]
+    },
+    "enemyState": {
+      "hp": 30,
+      "armor": 0,
+      "board": [
+        {
+          "id": "min_big",
+          "cardRef": "EX1_390",
+          "name": "Tauren Warrior",
+          "attack": 2,
+          "health": 7,
+          "taunt": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/EX1_390.png"
+        },
+        {
+          "id": "min_m1",
+          "cardRef": "CS2_189",
+          "name": "Elven Archer",
+          "attack": 1,
+          "health": 1,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_189.png"
+        },
+        {
+          "id": "min_m2",
+          "cardRef": "CS2_189",
+          "name": "Elven Archer",
+          "attack": 1,
+          "health": 1,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_189.png"
+        },
+        {
+          "id": "min_m3",
+          "cardRef": "CS2_168",
+          "name": "Murloc Raider",
+          "attack": 2,
+          "health": 1,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_168.png"
+        }
+      ]
+    }
+  },
+  {
+    "puzzleId": "clear_003",
+    "title": "Light's Reckoning",
+    "description": "A classic combo — Equality sets everything to 1/1, then Consecration sweeps the board. Time it right.",
+    "difficulty": "hard",
+    "winConditionType": "BOARD_CLEAR",
+    "playerState": {
+      "hp": 15,
+      "mana": {
+        "current": 8,
+        "max": 8
+      },
+      "heroClass": "PALADIN",
+      "hand": [
+        "EX1_619",
+        "CS2_093"
+      ],
+      "board": [
+        {
+          "id": "min_r1",
+          "cardRef": "CS2_101",
+          "name": "Voodoo Doctor",
+          "attack": 2,
+          "health": 1,
+          "canAttack": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_101.png"
+        },
+        {
+          "id": "min_r2",
+          "cardRef": "CS2_101",
+          "name": "Voodoo Doctor",
+          "attack": 2,
+          "health": 1,
+          "canAttack": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_101.png"
+        }
+      ]
+    },
+    "enemyState": {
+      "hp": 30,
+      "armor": 0,
+      "board": [
+        {
+          "id": "min_ds1",
+          "cardRef": "EX1_506",
+          "name": "Murloc Tidehunter",
+          "attack": 2,
+          "health": 2,
+          "divineShield": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/EX1_506.png"
+        },
+        {
+          "id": "min_ds2",
+          "cardRef": "EX1_506",
+          "name": "Murloc Tidehunter",
+          "attack": 2,
+          "health": 2,
+          "divineShield": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/EX1_506.png"
+        },
+        {
+          "id": "min_big2",
+          "cardRef": "CS2_172",
+          "name": "Sen'jin Shieldmasta",
+          "attack": 3,
+          "health": 5,
+          "taunt": true,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_172.png"
+        },
+        {
+          "id": "min_small",
+          "cardRef": "CS2_168",
+          "name": "Murloc Raider",
+          "attack": 2,
+          "health": 3,
+          "type": "minion",
+          "image": "https://art.hearthstonejson.com/v1/render/latest/enUS/512x/CS2_168.png"
+        }
+      ]
+    }
+  },
+  {
+    "puzzleId": "hsreplay_turn13_huby",
+    "title": "Turno 13 de Huby: Despejando a los Dioses Antiguos",
+    "winConditionType": "BOARD_CLEAR",
+    "playerState": {
+      "hp": 15,
+      "mana": {
+        "current": 10,
+        "max": 10
+      },
+      "heroClass": "WARRIOR",
+      "hand": [
+        "TIME_870",
+        "TIME_715",
+        "EX1_391",
+        "CS2_108",
+        "EX1_407"
+      ],
+      "board": [
+        {
+          "id": "p_minion_1",
+          "cardRef": "CS2_106",
+          "attack": 3,
+          "health": 2,
+          "canAttack": true
+        }
+      ]
+    },
+    "enemyState": {
+      "hp": 22,
+      "board": [
+        {
+          "id": "e_minion_1",
+          "cardRef": "CATA_200",
+          "attack": 8,
+          "health": 8
+        }
+      ]
+    },
+    "solutions": [
+      {
+        "rating": "BEST",
+        "sequence": [
+          {
+            "action": "play_spell",
+            "cardId": "TIME_870",
+            "targetId": null
+          },
+          {
+            "action": "play_spell",
+            "cardId": "TIME_715",
+            "targetId": null
+          },
+          {
+            "action": "play_spell",
+            "cardId": "EX1_391",
+            "targetId": "e_minion_1"
+          },
+          {
+            "action": "play_spell",
+            "cardId": "CS2_108",
+            "targetId": "e_minion_1"
+          }
+        ],
+        "feedback": "¡Excelente! Seguiste exactamente los pasos del jugador en la partida. Usaste Embate (Slam) para robar carta y dañar al esbirro, dejándolo a tiro para Ejecutar (Execute)."
+      },
+      {
+        "rating": "GOOD",
+        "sequence": [
+          {
+            "action": "play_spell",
+            "cardId": "EX1_407",
+            "targetId": null
+          }
+        ],
+        "feedback": "Usar Camorra (Brawl) limpia la mesa con seguridad si tu esbirro pierde, pero desperdicias un removal de área muy valioso contra un solo objetivo."
+      },
+      {
+        "rating": "BAD",
+        "sequence": [
+          {
+            "action": "play_spell",
+            "cardId": "CS2_108",
+            "targetId": "e_minion_1"
+          }
+        ],
+        "feedback": "¡Error! No puedes lanzar Ejecutar a un esbirro que tiene la salud al máximo. Debes dañarlo primero."
+      }
+    ]
+  },
+  {
+    "puzzleId": "hsreplay_turn6_saxou",
+    "title": "Turno 6 de Saxou: Control de Raíces",
+    "winConditionType": "BOARD_CLEAR",
+    "playerState": {
+      "hp": 22,
+      "mana": {
+        "current": 6,
+        "max": 6
+      },
+      "heroClass": "DRUID",
+      "hand": [
+        "AT_037",
+        "CS2_012",
+        "CS2_011",
+        "EDR_270"
+      ],
+      "board": [
+        {
+          "id": "p_minion_1",
+          "cardRef": "CATA_131",
+          "attack": 4,
+          "health": 5,
+          "canAttack": true
+        },
+        {
+          "id": "p_minion_2",
+          "cardRef": "EDR_847",
+          "attack": 3,
+          "health": 3,
+          "canAttack": true
+        }
+      ]
+    },
+    "enemyState": {
+      "hp": 18,
+      "board": [
+        {
+          "id": "e_minion_1",
+          "cardRef": "FIR_921",
+          "attack": 3,
+          "health": 2
+        }
+      ]
+    },
+    "solutions": [
+      {
+        "rating": "BEST",
+        "sequence": [
+          {
+            "action": "play_spell",
+            "cardId": "AT_037",
+            "targetId": "e_minion_1"
+          }
+        ],
+        "feedback": "¡Excelente! Usaste Raíces vivas para hacer 2 de daño y eliminar la amenaza enemiga de la forma más eficiente, preservando a tus esbirros y tu maná restante."
+      },
+      {
+        "rating": "GOOD",
+        "sequence": [
+          {
+            "action": "play_spell",
+            "cardId": "CS2_012",
+            "targetId": "e_minion_1"
+          }
+        ],
+        "feedback": "El uso de Flagelo (Swipe) limpia el esbirro enemigo y daña al héroe rival, pero gastas un hechizo de área muy valioso en un objetivo pequeño."
+      },
+      {
+        "rating": "BAD",
+        "sequence": [
+          {
+            "action": "attack",
+            "sourceId": "p_minion_2",
+            "targetId": "e_minion_1"
+          }
+        ],
+        "feedback": "¡Mala idea! Sacrificaste innecesariamente la salud de tu esbirro cuando tenías opciones en la mano para eliminar el objetivo gratis."
+      }
+    ]
+  }
+]

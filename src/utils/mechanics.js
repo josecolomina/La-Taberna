@@ -115,6 +115,21 @@ export const BATTLECRY_HANDLERS = {
     // Signal handled by store after battlecry resolves
     player._drawPending = (player._drawPending ?? 0) + 1;
   },
+
+  /**
+   * SUMMON_TOKEN — place a token minion on the friendly board.
+   * Only triggers if board has < 7 minions.
+   */
+  SUMMON_TOKEN: ({ playerBoard, tokenData }) => {
+    if (!tokenData || playerBoard.length >= 7) return;
+    playerBoard.push({
+      id: `token-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type: 'minion',
+      canAttack: false,
+      attacksThisTurn: 0,
+      ...tokenData,
+    });
+  },
 };
 
 // ── DEATHRATTLE HANDLERS ────────────────────────────────────────────────────

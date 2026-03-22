@@ -39,9 +39,23 @@
       }
     ]
   },
-  "solutionSequence": [
-    { "action": "play_spell", "cardId": "CS2_029", "targetId": "enemy_hero" },
-    { "action": "play_spell", "cardId": "CS2_029", "targetId": "enemy_hero" },
-    { "action": "attack",     "sourceId": "min_tal", "targetId": "enemy_hero" }
+  "solutions": [
+    {
+      "rating": "BEST",
+      "feedback": "¡Letal perfecto! Usaste los recursos exactos sin arriesgar a tu esbirro.",
+      "sequence": [
+        { "action": "play_spell", "cardId": "CS2_029", "targetId": "enemy_hero" },
+        { "action": "play_spell", "cardId": "CS2_029", "targetId": "enemy_hero" }
+      ]
+    },
+    {
+      "rating": "GOOD",
+      "feedback": "Correcto. Aunque era letal, atacaste primero lo que añade un pequeño riesgo innecesario.",
+      "sequence": [
+        { "action": "attack",     "sourceId": "min_tal", "targetId": "enemy_hero" },
+        { "action": "play_spell", "cardId": "CS2_029", "targetId": "enemy_hero" },
+        { "action": "play_spell", "cardId": "CS2_029", "targetId": "enemy_hero" }
+      ]
+    }
   ]
 }

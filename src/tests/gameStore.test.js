@@ -40,10 +40,22 @@ vi.mock('../data/puzzle1.json', () => ({
       ],
       weapon: null, heroPowerUsed: true, frozen: false,
     },
-    solutionSequence: [
-      { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' },
-      { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' },
-      { action: 'attack',     sourceId: 'min_tal', targetId: 'enemy_hero' },
+    solutions: [
+      {
+        rating: 'BEST', feedback: 'Perfect',
+        sequence: [
+          { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' },
+          { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' }
+        ]
+      },
+      {
+        rating: 'GOOD', feedback: 'Risky',
+        sequence: [
+          { action: 'attack',     sourceId: 'min_tal', targetId: 'enemy_hero' },
+          { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' },
+          { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' }
+        ]
+      }
     ],
   },
 }));
@@ -78,14 +90,27 @@ function resetStore() {
       ],
       weapon: null, heroPowerUsed: true, frozen: false,
     },
-    solutionSequence: [
-      { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' },
-      { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' },
-      { action: 'attack',     sourceId: 'min_tal', targetId: 'enemy_hero' },
+    solutions: [
+      {
+        rating: 'BEST', feedback: 'Perfect',
+        sequence: [
+          { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' },
+          { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' }
+        ]
+      },
+      {
+        rating: 'GOOD', feedback: 'Risky',
+        sequence: [
+          { action: 'attack',     sourceId: 'min_tal', targetId: 'enemy_hero' },
+          { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' },
+          { action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' }
+        ]
+      }
     ],
     actionQueue: [], isProcessing: false, targetingMode: null,
-    currentSequenceIndex: 0, isWrongMove: false, isLethalFound: false,
+    currentSequenceIndex: 0, isWrongMove: false, isLethalFound: false, isBoardCleared: false,
     pendingBattlecry: null, discoverOptions: null, playHistory: [],
+    pastStates: [], winConditionType: 'LETHAL',
   });
 }
 
@@ -140,14 +165,23 @@ describe('play_spell', () => {
     await flush(600);
     expect(useGameStore.getState().enemyState.hp).toBe(0);
   });
-  it('full solution → triggers isLethalFound', async () => {
+  it('BEST route: triggers isLethalFound and sets rating to BEST', async () => {
     useGameStore.getState().performAction({ action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' });
     await flush(600);
     useGameStore.getState().performAction({ action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' });
-    await flush(600);
-    useGameStore.getState().performAction({ action: 'attack', sourceId: 'min_tal', targetId: 'enemy_hero' });
     await flush(600);
     expect(useGameStore.getState().isLethalFound).toBe(true);
+    expect(useGameStore.getState().completedSolution?.rating).toBe('BEST');
+  });
+  it('GOOD route: triggers isLethalFound and sets rating to GOOD', async () => {
+    useGameStore.getState().performAction({ action: 'attack', sourceId: 'min_tal', targetId: 'enemy_hero' });
+    await flush(600);
+    useGameStore.getState().performAction({ action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' });
+    await flush(600);
+    useGameStore.getState().performAction({ action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' });
+    await flush(600);
+    expect(useGameStore.getState().isLethalFound).toBe(true);
+    expect(useGameStore.getState().completedSolution?.rating).toBe('GOOD');
   });
   it('wrong first move sets isWrongMove', async () => {
     useGameStore.getState().performAction({ action: 'play_spell', cardId: 'CS2_029', targetId: 'min_taunt' });
@@ -187,6 +221,21 @@ describe('play_minion', () => {
     useGameStore.getState().applyEvent({ action: 'play_minion', cardId: 'charge_m' });
     const placed = useGameStore.getState().playerState.board.find(m => m.id === 'charge_m');
     expect(placed?.canAttack).toBe(true);
+  });
+  it('blocks playing a minion if board has 7 minions', () => {
+    const minionCard = { id: 'test_minion', name: 'Test', cost: 1, type: 'minion', attack: 2, health: 2, image: '' };
+    useGameStore.setState(s => ({
+      playerState: { ...s.playerState,
+        hand: [minionCard],
+        board: Array(7).fill({ id: 'filler', type: 'minion', health: 1 })
+      },
+    }));
+    const res = useGameStore.getState().applyEvent({ action: 'play_minion', cardId: 'test_minion' });
+    expect(res).toBeUndefined(); // Wait, applyEvent doesn't return anything natively? Ah, applyEvent returns what goes into set.
+    // Let's check state.
+    expect(useGameStore.getState().isWrongMove).toBe(true);
+    expect(useGameStore.getState().playerState.board).toHaveLength(7);
+    expect(useGameStore.getState().playerState.hand).toHaveLength(1); // card still in hand
   });
 });
 
@@ -245,7 +294,7 @@ describe('applyEvent edge cases', () => {
       playerState: { ...s.playerState, board: [
         { id: 'poison_m', type: 'minion', attack: 1, health: 1, poisonous: true, canAttack: true, attacksThisTurn: 0 },
       ]},
-      solutionSequence: [],
+      solutions: [],
     }));
     useGameStore.getState().applyEvent({ action: 'attack', sourceId: 'poison_m', targetId: 'min_taunt' });
     useGameStore.getState().processDeaths();
@@ -321,7 +370,7 @@ describe('Weapons — hero_attack', () => {
   it('weapon durability decrements by 1 after hero attack', async () => {
     useGameStore.setState(s => ({
       playerState: { ...s.playerState, weapon: { name: 'Sword', attack: 3, durability: 2 } },
-      solutionSequence: [],
+      solutions: [],
     }));
     useGameStore.getState().applyEvent({ action: 'hero_attack', targetId: 'min_taunt' });
     expect(useGameStore.getState().playerState.weapon?.durability).toBe(1);
@@ -330,7 +379,7 @@ describe('Weapons — hero_attack', () => {
   it('weapon is removed when durability reaches 0', async () => {
     useGameStore.setState(s => ({
       playerState: { ...s.playerState, weapon: { name: 'Sword', attack: 3, durability: 1 } },
-      solutionSequence: [],
+      solutions: [],
     }));
     useGameStore.getState().applyEvent({ action: 'hero_attack', targetId: 'min_taunt' });
     expect(useGameStore.getState().playerState.weapon).toBeNull();
@@ -343,9 +392,52 @@ describe('Weapons — hero_attack', () => {
       enemyState:  { ...s.enemyState, board: [
         { id: 'retaliate_m', name: 'Hurt', type: 'minion', attack: 3, health: 10, attacksThisTurn: 0 },
       ]},
-      solutionSequence: [],
+      solutions: [],
     }));
     useGameStore.getState().applyEvent({ action: 'hero_attack', targetId: 'retaliate_m' });
     expect(useGameStore.getState().playerState.hp).toBe(27);
+  });
+});
+
+describe('Undo / Time Machine', () => {
+  it('Undo restores previous board state and mana', async () => {
+    // 1. Initial State assertions
+    expect(useGameStore.getState().playerState.mana.current).toBe(10);
+    expect(useGameStore.getState().enemyState.hp).toBe(14);
+    expect(useGameStore.getState().pastStates).toHaveLength(0);
+
+    // 2. Perform action to mutate state
+    useGameStore.getState().performAction({ action: 'play_spell', cardId: 'CS2_029', targetId: 'enemy_hero' });
+    await flush();
+
+    // 3. Verify state mutated
+    expect(useGameStore.getState().playerState.mana.current).toBe(6);
+    expect(useGameStore.getState().enemyState.hp).toBe(7);
+    expect(useGameStore.getState().pastStates).toHaveLength(1);
+
+    // 4. Trigger Undo
+    useGameStore.getState().undoLastMove();
+
+    // 5. Verify restored state
+    expect(useGameStore.getState().pastStates).toHaveLength(0);
+    expect(useGameStore.getState().playerState.mana.current).toBe(10);
+    expect(useGameStore.getState().enemyState.hp).toBe(14);
+    expect(useGameStore.getState().playerState.hand).toHaveLength(2); // Card returned to hand
+  });
+});
+
+describe('Hero Power edge cases', () => {
+  it('blocks summoning token if board has 7 minions', () => {
+    useGameStore.setState(s => ({
+      playerState: { ...s.playerState,
+        heroClass: 'PALADIN',
+        heroPower: { type: 'SUMMON', cost: 2, tokenData: { name: 'Token', attack: 1, health: 1 } },
+        heroPowerUsed: false,
+        mana: { current: 10, max: 10 },
+        board: Array(7).fill({ id: 'filler', type: 'minion', health: 1 })
+      }
+    }));
+    useGameStore.getState().applyEvent({ action: 'use_hero_power' });
+    expect(useGameStore.getState().playerState.board).toHaveLength(7);
   });
 });

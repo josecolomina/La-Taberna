@@ -12,6 +12,7 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore }   from '../../store/useGameStore';
 import { useInteraction, INTERACTION_STATE } from '../../hooks/useInteraction';
+import { useSound }       from '../../hooks/useSound';
 import Hero             from './Hero';
 import Minion           from './Minion';
 import Hand             from '../Card/Hand';
@@ -21,9 +22,11 @@ import TargetingArrow   from '../Shared/TargetingArrow';
 import DamageNumber     from '../Shared/DamageNumber';
 import PlayHistory      from '../Shared/PlayHistory';
 import LethalScreen     from './LethalScreen';
-import DiscoverModal    from '../Shared/DiscoverModal';
+import BoardClearScreen from '../BoardClear/BoardClearScreen';
+import BoardClearFailScreen from '../BoardClear/BoardClearFailScreen';
+import { useAppStore }  from '../../store/useAppStore';
 
-export default function PuzzleBoard() {
+export default function PuzzleBoard({ onNextPuzzle }) {
   const boardRef    = useRef(null);
   const {
     resetPuzzle,
@@ -32,9 +35,14 @@ export default function PuzzleBoard() {
     performAction,
     isWrongMove,
     isLethalFound,
+    isBoardCleared,
+    winConditionType,
+    pastStates,
+    undoLastMove,
   } = useGameStore();
 
   const interaction = useInteraction();
+  const { play } = useSound();
 
   useEffect(() => { resetPuzzle(); }, []);
 
@@ -155,11 +163,26 @@ export default function PuzzleBoard() {
           <TargetingArrow boardRef={boardRef} />
 
           {/* ── Epic Lethal Screen ──────────────────────────────── */}
-          <LethalScreen isVisible={isLethalFound} />
+          {winConditionType === 'LETHAL' && <LethalScreen isVisible={isLethalFound} />}
+          {winConditionType === 'BOARD_CLEAR' && (
+            <>
+              <BoardClearScreen
+                isVisible={isBoardCleared}
+                onReset={() => { resetPuzzle(); interaction.backToIdle(); }}
+                onMenu={() => useAppStore.getState().goTo('menu')}
+                onNext={onNextPuzzle}
+              />
+              <BoardClearFailScreen
+                isVisible={isWrongMove && !isBoardCleared}
+                onReset={() => { resetPuzzle(); interaction.backToIdle(); }}
+                onMenu={() => useAppStore.getState().goTo('menu')}
+              />
+            </>
+          )}
 
           {/* ── Wrong move flash ────────────────────────────────── */}
           <AnimatePresence>
-            {isWrongMove && (
+            {isWrongMove && winConditionType !== 'BOARD_CLEAR' && (
               <motion.div
                 key="wrong"
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
@@ -189,7 +212,7 @@ export default function PuzzleBoard() {
               whileHover={{ scale: 1.06, boxShadow: '0 0 20px rgba(180,140,60,0.6)' }}
               whileTap={{ scale: 0.93 }}
               onClick={() => performAction({ action: 'end_turn' })}
-              disabled={isLethalFound}
+              disabled={isLethalFound || isBoardCleared}
               style={{
                 width: 80, height: 52,
                 background: 'radial-gradient(ellipse at 50% 30%, #3a3528, #1e1c16)',
@@ -202,13 +225,47 @@ export default function PuzzleBoard() {
                 letterSpacing: '0.07em',
                 textShadow: '0 0 8px rgba(212,175,55,0.6)',
                 boxShadow: '0 4px 14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)',
-                cursor: isLethalFound ? 'not-allowed' : 'pointer',
+                cursor: (isLethalFound || isBoardCleared) ? 'not-allowed' : 'pointer',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 gap: 2,
               }}
             >
               <span style={{ fontSize: 18, lineHeight: 1 }}>⚔</span>
               END TURN
+            </motion.button>
+
+            {/* Undo */}
+            <motion.button
+              whileHover={pastStates.length > 0 ? { scale: 1.06, boxShadow: '0 0 16px rgba(100,150,255,0.4)' } : {}}
+              whileTap={pastStates.length > 0 ? { scale: 0.93 } : {}}
+              onClick={() => {
+                if (pastStates.length > 0) {
+                  play('rewind');
+                  undoLastMove();
+                  interaction.backToIdle();
+                }
+              }}
+              disabled={pastStates.length === 0}
+              title="Undo Last Move"
+              style={{
+                width: 80, height: 38,
+                background: 'radial-gradient(ellipse at 50% 30%, #22283a, #141820)',
+                border: '2px solid #3a4060',
+                borderRadius: 8,
+                color: pastStates.length > 0 ? '#94a3b8' : '#475569',
+                opacity: pastStates.length > 0 ? 1 : 0.5,
+                fontFamily: 'var(--font-hs)',
+                fontWeight: 700,
+                fontSize: 10,
+                letterSpacing: '0.07em',
+                cursor: pastStates.length > 0 ? 'pointer' : 'not-allowed',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 1,
+                boxShadow: '0 3px 10px rgba(0,0,0,0.6)',
+              }}
+            >
+              <span style={{ fontSize: 16, lineHeight: 1 }}>⏪</span>
+              UNDO
             </motion.button>
 
             {/* Reset — carved stone button */}
@@ -257,7 +314,7 @@ export default function PuzzleBoard() {
             </div>
 
             {/* Enemy board */}
-            <div className="flex justify-center items-center gap-8 flex-1 pb-2 relative z-10">
+            <div className="flex justify-center items-center gap-2 sm:gap-4 md:gap-5 flex-1 pb-2 relative z-10 max-w-full">
               {enemyState.board.map(m => (
                 <div key={m.id} id={m.id}>
                   <Minion
@@ -289,7 +346,7 @@ export default function PuzzleBoard() {
               style={{ background: 'radial-gradient(ellipse at 50% 110%, rgba(60,80,160,0.12) 0%, transparent 70%)' }} />
 
             {/* Player board */}
-            <div className="flex justify-center items-center gap-8 flex-1 pt-2 relative z-10">
+            <div className="flex justify-center items-center gap-2 sm:gap-4 md:gap-5 flex-1 pt-2 relative z-10 max-w-full">
               {playerState.board.map(m => (
                 <div key={m.id} id={m.id}>
                   <Minion minion={m} owner="player" />
